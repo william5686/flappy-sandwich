@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Etiquetas PWA requeridas -->
+    <meta name="theme-color" content="#0f172a">
     <title>Flappy Sandwich Bird</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -10,7 +12,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Conexión al Manifiesto e Iconos -->
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -119,7 +125,6 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // Setup Canvas Resolution to match container dimensions
         function resizeCanvas() {
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
@@ -128,18 +133,15 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Game States
         const STATE_START = 'START';
         const STATE_PLAYING = 'PLAYING';
         const STATE_GAMEOVER = 'GAMEOVER';
         let gameState = STATE_START;
 
-        // Score Variables
         let score = 0;
         let highScore = localStorage.getItem('flappy_sandwich_highscore') || 0;
         document.getElementById('high-score').innerText = highScore;
 
-        // Sandwich Player Object
         let bird = {
             x: canvas.width * 0.25,
             y: canvas.height * 0.5,
@@ -150,7 +152,6 @@
             rotation: 0
         };
 
-        // Pipes / Obstacles Array
         let pipes = [];
         let pipeWidth = 65;
         let pipeGap = 160;
@@ -158,7 +159,6 @@
         let frameCount = 0;
         let hasRevived = false;
 
-        // Particle System for jump/score effects
         let particles = [];
 
         function createParticles(x, y, color = '#f59e0b') {
@@ -201,7 +201,6 @@
             }
         }
 
-        // Input Listeners (Mouse, Touch, Keyboard)
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space' || e.code === 'ArrowUp') {
                 e.preventDefault();
@@ -218,7 +217,6 @@
             flap();
         }, { passive: false });
 
-        // Spawn Pipes
         function spawnPipe() {
             const minHeight = 60;
             const maxHeight = canvas.height - pipeGap - 140;
@@ -232,7 +230,6 @@
             });
         }
 
-        // Trigger Simulated Ad for Reviving
         function watchAdToRevive() {
             if (hasRevived) {
                 showToast('Ya has usado tu revivir en esta partida.');
@@ -259,10 +256,8 @@
                     hasRevived = true;
                     document.getElementById('gameover-screen').classList.add('hidden');
                     
-                    // Revive sandwich safely in the center
                     bird.y = canvas.height * 0.4;
                     bird.velocity = 0;
-                    // Remove immediate nearby pipe
                     pipes = pipes.filter(p => p.x > canvas.width * 0.4);
                     
                     gameState = STATE_PLAYING;
@@ -303,15 +298,12 @@
             gameState = STATE_PLAYING;
         }
 
-        // Main Update Loop
         function update() {
             if (gameState === STATE_PLAYING) {
-                // Apply gravity
                 bird.velocity += bird.gravity;
                 bird.y += bird.velocity;
                 bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.velocity * 0.08));
 
-                // Ground and ceiling collision
                 if (bird.y + bird.radius >= canvas.height - 40) {
                     bird.y = canvas.height - 40 - bird.radius;
                     gameOver();
@@ -321,16 +313,13 @@
                     bird.velocity = 0;
                 }
 
-                // Pipe generation
                 if (frameCount % 110 === 0) {
                     spawnPipe();
                 }
 
-                // Move and check pipes
                 for (let i = pipes.length - 1; i >= 0; i--) {
                     pipes[i].x -= pipeSpeed;
 
-                    // Score point when passing pipe
                     if (!pipes[i].passed && pipes[i].x + pipeWidth < bird.x) {
                         pipes[i].passed = true;
                         score++;
@@ -338,7 +327,6 @@
                         createParticles(bird.x, bird.y, '#38bdf8');
                     }
 
-                    // Collision detection with pipes
                     if (
                         bird.x + bird.radius > pipes[i].x &&
                         bird.x - bird.radius < pipes[i].x + pipeWidth &&
@@ -347,7 +335,6 @@
                         gameOver();
                     }
 
-                    // Remove off-screen pipes
                     if (pipes[i].x + pipeWidth < 0) {
                         pipes.splice(i, 1);
                     }
@@ -356,7 +343,6 @@
                 frameCount++;
             }
 
-            // Update particles
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.x += p.vx;
@@ -368,15 +354,12 @@
             }
         }
 
-        // Render Graphics on Canvas
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Background Clouds / Mountains (Simple aesthetic touches)
             ctx.fillStyle = '#38bdf8';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw decorative clouds
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.beginPath();
             ctx.arc(60, 100, 30, 0, Math.PI * 2);
@@ -389,35 +372,30 @@
             ctx.arc(canvas.width - 50, 210, 45, 0, Math.PI * 2);
             ctx.fill();
 
-            // Draw Pipes (Styled as Sandwich Ingredients / Pillars)
             pipes.forEach(pipe => {
-                // Top Pipe
-                ctx.fillStyle = '#16a34a'; // Green lettuce style border
+                ctx.fillStyle = '#16a34a'; 
                 ctx.fillRect(pipe.x - 4, 0, pipeWidth + 8, pipe.top);
                 ctx.fillStyle = '#22c55e';
                 ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top - 15);
-                // Pipe lip
+                
                 ctx.fillStyle = '#15803d';
                 ctx.fillRect(pipe.x - 6, pipe.top - 20, pipeWidth + 12, 20);
 
-                // Bottom Pipe
                 let bottomY = canvas.height - pipe.bottom;
                 ctx.fillStyle = '#16a34a';
                 ctx.fillRect(pipe.x - 4, bottomY + 15, pipeWidth + 8, pipe.bottom);
                 ctx.fillStyle = '#22c55e';
                 ctx.fillRect(pipe.x, bottomY + 15, pipeWidth, pipe.bottom);
-                // Pipe lip
+                
                 ctx.fillStyle = '#15803d';
                 ctx.fillRect(pipe.x - 6, bottomY, pipeWidth + 12, 20);
             });
 
-            // Draw Ground Floor
-            ctx.fillStyle = '#ca8a04'; // Crust color bottom
+            ctx.fillStyle = '#ca8a04'; 
             ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
             ctx.fillStyle = '#eab308';
             ctx.fillRect(0, canvas.height - 40, canvas.width, 12);
 
-            // Draw Particles
             particles.forEach(p => {
                 ctx.save();
                 ctx.globalAlpha = p.alpha;
@@ -428,12 +406,10 @@
                 ctx.restore();
             });
 
-            // Draw Sandwich Bird Character
             ctx.save();
             ctx.translate(bird.x, bird.y);
             ctx.rotate(bird.rotation);
 
-            // Sandwich Body (Bread emoji representation or custom canvas draw)
             ctx.font = '42px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -442,14 +418,12 @@
             ctx.restore();
         }
 
-        // Game Loop Engine
         function loop() {
             update();
             draw();
             requestAnimationFrame(loop);
         }
 
-        // Start animation loop on window load
         window.onload = function() {
             loop();
         };
