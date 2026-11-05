@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flappy Sandwich Bird</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: none;
+            user-select: none;
+            background-color: #0f172a;
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center overflow-hidden m-0 p-0">
+
+    <!-- Game Container -->
+    <div class="relative w-full max-w-md h-full max-h-[850px] bg-sky-400 flex flex-col shadow-2xl overflow-hidden select-none sm:rounded-3xl border-4 border-slate-700">
+        
+        <!-- Top HUD (Score display) -->
+        <div id="hud" class="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20 pointer-events-none">
+            <div class="bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl text-white font-black text-2xl border border-white/25 shadow-lg">
+                <span id="current-score">0</span>
+            </div>
+            <div class="bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-2xl text-white font-bold text-xs border border-white/25 shadow-lg flex items-center gap-1.5">
+                <i class="fa-solid fa-trophy text-amber-400"></i> <span id="high-score">0</span>
+            </div>
+        </div>
+
+        <!-- Start Screen Overlay -->
+        <div id="start-screen" class="absolute inset-0 bg-gradient-to-b from-sky-500/80 to-blue-900/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 text-center">
+            <div class="w-20 h-20 bg-amber-400 rounded-3xl flex items-center justify-center text-4xl shadow-2xl mb-4 animate-bounce border-2 border-white">
+                🥪
+            </div>
+            <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight drop-shadow-md mb-1">
+                Flappy Sandwich
+            </h1>
+            <!-- 📍 CRÉDITOS AÑADIDOS A TU NOMBRE -->
+            <div class="text-sm text-yellow-400 font-bold mb-2">Creado por: William Estrada Santis </div>
+
+            <p class="text-sky-200 text-xs sm:text-sm max-w-xs mb-8">
+                Toca la pantalla o presiona Espacio para volar y esquivar los obstáculos.
+            </p>
+            <button onclick="startGame()" class="w-full max-w-xs bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition transform active:scale-95 text-lg border-2 border-amber-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-play"></i> Jugar Ahora
+            </button>
+        </div>
+
+        <!-- Game Over Screen Overlay -->
+        <div id="gameover-screen" class="absolute inset-0 bg-black/70 backdrop-blur-md z-30 hidden flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div class="bg-slate-900 border border-slate-700 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-white flex flex-col items-center">
+                <div class="text-4xl mb-1">💥</div>
+                <h2 class="text-2xl font-black text-red-500 mb-4">¡Game Over!</h2>
+                
+                <div class="grid grid-cols-2 gap-3 w-full mb-6">
+                    <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Puntuación</p>
+                        <p id="final-score" class="text-2xl font-black text-amber-400">0</p>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Récord</p>
+                        <p id="final-highscore" class="text-2xl font-black text-white">0</p>
+                    </div>
+                </div>
+
+                <!-- Rewarded Ad simulation button -->
+                <button id="revive-btn" onclick="watchAdToRevive()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-2xl shadow-lg transition transform active:scale-95 text-xs flex items-center justify-center gap-2 mb-3 border border-emerald-300/40">
+                    <i class="fa-solid fa-video text-sm"></i> Ver Anuncio para Revivir (+1 Oportunidad)
+                </button>
+
+                <button onclick="restartGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black py-3 px-4 rounded-2xl shadow-lg transition transform active:scale-95 text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Jugar de Nuevo
+                </button>
+            </div>
+        </div>
+
+        <!-- Simulated Ad Modal -->
+        <div id="ad-modal" class="absolute inset-0 bg-black/90 z-50 hidden flex flex-col items-center justify-center p-6 text-center">
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl max-w-xs w-full flex flex-col items-center">
+                <div class="text-xs uppercase bg-amber-500/20 text-amber-400 font-bold px-3 py-1 rounded-full mb-4">
+                    Anuncio Patrocinado (Simulado)
+                </div>
+                <div class="w-full h-36 bg-slate-800 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-purple-600/30 to-pink-600/30"></div>
+                    <div class="text-white font-bold text-sm z-10 flex flex-col items-center gap-2">
+                        <i class="fa-solid fa-gamepad text-3xl text-amber-400 animate-bounce"></i>
+                        <span>¡Descubre el nuevo RPG espacial!</span>
+                    </div>
+                </div>
+                <p id="ad-timer" class="text-slate-400 text-xs mb-4">El anuncio terminará en 3s...</p>
+                <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div id="ad-progress" class="bg-amber-500 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HTML5 Canvas for Game Rendering -->
+        <canvas id="gameCanvas" class="w-full h-full cursor-pointer"></canvas>
+    </div>
+
+    <!-- Toast message box -->
+    <div id="toast" class="fixed bottom-6 bg-slate-900 text-white text-xs px-4 py-2 rounded-xl shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50">
+        ¡Recompensa obtenida! Reviviendo partida...
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Setup Canvas Resolution to match container dimensions
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game States
+        const STATE_START = 'START';
+        const STATE_PLAYING = 'PLAYING';
+        const STATE_GAMEOVER = 'GAMEOVER';
+        let gameState = STATE_START;
+
+        // Score Variables
+        let score = 0;
+        let highScore = localStorage.getItem('flappy_sandwich_highscore') || 0;
+        document.getElementById('high-score').innerText = highScore;
+
+        // Sandwich Player Object
+        let bird = {
+            x: canvas.width * 0.25,
+            y: canvas.height * 0.5,
+            radius: 22,
+            gravity: 0.35,
+            lift: -7.5,
+            velocity: 0,
+            rotation: 0
+        };
+
+        // Pipes / Obstacles Array
+        let pipes = [];
+        let pipeWidth = 65;
+        let pipeGap = 160;
+        let pipeSpeed = 3.2;
+        let frameCount = 0;
+        let hasRevived = false;
+
+        // Particle System for jump/score effects
+        let particles = [];
+
+        function createParticles(x, y, color = '#f59e0b') {
+            for (let i = 0; i < 6; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    radius: Math.random() * 4 + 2,
+                    color: color,
+                    alpha: 1
+                });
+            }
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            resetGameVariables();
+            gameState = STATE_PLAYING;
+        }
+
+        function resetGameVariables() {
+            bird.y = canvas.height * 0.5;
+            bird.velocity = 0;
+            bird.rotation = 0;
+            pipes = [];
+            frameCount = 0;
+            score = 0;
+            document.getElementById('current-score').innerText = score;
+        }
+
+        function flap() {
+            if (gameState === STATE_PLAYING) {
+                bird.velocity = bird.lift;
+                createParticles(bird.x, bird.y, '#fbbf24');
+            } else if (gameState === STATE_START) {
+                startGame();
+            }
+        }
+
+        // Input Listeners (Mouse, Touch, Keyboard)
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault();
+                flap();
+            }
+        });
+
+        canvas.addEventListener('click', () => {
+            flap();
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            flap();
+        }, { passive: false });
+
+        // Spawn Pipes
+        function spawnPipe() {
+            const minHeight = 60;
+            const maxHeight = canvas.height - pipeGap - 140;
+            const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+
+            pipes.push({
+                x: canvas.width,
+                top: topHeight,
+                bottom: canvas.height - topHeight - pipeGap,
+                passed: false
+            });
+        }
+
+        // Trigger Simulated Ad for Reviving
+        function watchAdToRevive() {
+            if (hasRevived) {
+                showToast('Ya has usado tu revivir en esta partida.');
+                return;
+            }
+
+            const adModal = document.getElementById('ad-modal');
+            const adProgress = document.getElementById('ad-progress');
+            const adTimer = document.getElementById('ad-timer');
+            
+            adModal.classList.remove('hidden');
+            adProgress.style.width = '100%';
+            
+            let timeLeft = 3;
+            adTimer.innerText = `El anuncio terminará en ${timeLeft}s...`;
+
+            const interval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    adTimer.innerText = `El anuncio terminará en ${timeLeft}s...`;
+                } else {
+                    clearInterval(interval);
+                    adModal.classList.add('hidden');
+                    hasRevived = true;
+                    document.getElementById('gameover-screen').classList.add('hidden');
+                    
+                    // Revive sandwich safely in the center
+                    bird.y = canvas.height * 0.4;
+                    bird.velocity = 0;
+                    // Remove immediate nearby pipe
+                    pipes = pipes.filter(p => p.x > canvas.width * 0.4);
+                    
+                    gameState = STATE_PLAYING;
+                    showToast('¡Has revivido con éxito! 🥪🎉');
+                }
+            }, 1000);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+
+        function gameOver() {
+            gameState = STATE_GAMEOVER;
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('flappy_sandwich_highscore', highScore);
+                document.getElementById('high-score').innerText = highScore;
+            }
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-highscore').innerText = highScore;
+            document.getElementById('gameover-screen').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            hasRevived = false;
+            document.getElementById('gameover-screen').classList.add('hidden');
+            resetGameVariables();
+            gameState = STATE_PLAYING;
+        }
+
+        // Main Update Loop
+        function update() {
+            if (gameState === STATE_PLAYING) {
+                // Apply gravity
+                bird.velocity += bird.gravity;
+                bird.y += bird.velocity;
+                bird.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, bird.velocity * 0.08));
+
+                // Ground and ceiling collision
+                if (bird.y + bird.radius >= canvas.height - 40) {
+                    bird.y = canvas.height - 40 - bird.radius;
+                    gameOver();
+                }
+                if (bird.y - bird.radius <= 0) {
+                    bird.y = bird.radius;
+                    bird.velocity = 0;
+                }
+
+                // Pipe generation
+                if (frameCount % 110 === 0) {
+                    spawnPipe();
+                }
+
+                // Move and check pipes
+                for (let i = pipes.length - 1; i >= 0; i--) {
+                    pipes[i].x -= pipeSpeed;
+
+                    // Score point when passing pipe
+                    if (!pipes[i].passed && pipes[i].x + pipeWidth < bird.x) {
+                        pipes[i].passed = true;
+                        score++;
+                        document.getElementById('current-score').innerText = score;
+                        createParticles(bird.x, bird.y, '#38bdf8');
+                    }
+
+                    // Collision detection with pipes
+                    if (
+                        bird.x + bird.radius > pipes[i].x &&
+                        bird.x - bird.radius < pipes[i].x + pipeWidth &&
+                        (bird.y - bird.radius < pipes[i].top || bird.y + bird.radius > canvas.height - pipes[i].bottom)
+                    ) {
+                        gameOver();
+                    }
+
+                    // Remove off-screen pipes
+                    if (pipes[i].x + pipeWidth < 0) {
+                        pipes.splice(i, 1);
+                    }
+                }
+
+                frameCount++;
+            }
+
+            // Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.03;
+                if (p.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        // Render Graphics on Canvas
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Background Clouds / Mountains (Simple aesthetic touches)
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw decorative clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.arc(60, 100, 30, 0, Math.PI * 2);
+            ctx.arc(90, 90, 40, 0, Math.PI * 2);
+            ctx.arc(120, 105, 25, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(canvas.width - 80, 220, 35, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 50, 210, 45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Pipes (Styled as Sandwich Ingredients / Pillars)
+            pipes.forEach(pipe => {
+                // Top Pipe
+                ctx.fillStyle = '#16a34a'; // Green lettuce style border
+                ctx.fillRect(pipe.x - 4, 0, pipeWidth + 8, pipe.top);
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top - 15);
+                // Pipe lip
+                ctx.fillStyle = '#15803d';
+                ctx.fillRect(pipe.x - 6, pipe.top - 20, pipeWidth + 12, 20);
+
+                // Bottom Pipe
+                let bottomY = canvas.height - pipe.bottom;
+                ctx.fillStyle = '#16a34a';
+                ctx.fillRect(pipe.x - 4, bottomY + 15, pipeWidth + 8, pipe.bottom);
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(pipe.x, bottomY + 15, pipeWidth, pipe.bottom);
+                // Pipe lip
+                ctx.fillStyle = '#15803d';
+                ctx.fillRect(pipe.x - 6, bottomY, pipeWidth + 12, 20);
+            });
+
+            // Draw Ground Floor
+            ctx.fillStyle = '#ca8a04'; // Crust color bottom
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+            ctx.fillStyle = '#eab308';
+            ctx.fillRect(0, canvas.height - 40, canvas.width, 12);
+
+            // Draw Particles
+            particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw Sandwich Bird Character
+            ctx.save();
+            ctx.translate(bird.x, bird.y);
+            ctx.rotate(bird.rotation);
+
+            // Sandwich Body (Bread emoji representation or custom canvas draw)
+            ctx.font = '42px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🥪', 0, 0);
+
+            ctx.restore();
+        }
+
+        // Game Loop Engine
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Start animation loop on window load
+        window.onload = function() {
+            loop();
+        };
+    </script>
+</body>
+</html>
