@@ -3,8 +3,8 @@ const ARCHIVOS = [
   './',
   './index.html',
   './manifest.json',
-  './android/android-launchericon-192-192.png',
-  './android/android-launchericon-512-512.png'
+  './android/launchericon-192x192.png',
+  './android/launchericon-512x512.png'
 ];
 
 self.addEventListener('install', e => {
