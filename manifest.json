@@ -1,0 +1,16 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Flappy Sandwich",
+  "orientation": "portrait",
+  "scope": "/.",
+  "short_name": "FlappySandwich",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "description": "Un juego divertido de un sándwich volador.",
+  "id": "/flappysandwich/",
+  "categories": [
+    "games"
+  ]
+}
